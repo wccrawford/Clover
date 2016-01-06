@@ -1,4 +1,90 @@
-body {
-  color: blue;
+.inventory {
+  padding: .25em;
+  margin: .25em;
+  border: 1px solid blue;
+  border-radius: .25em;
 }
 
+.clover {
+  height: 5em;
+  width: 5em;
+  display: inline-block;
+  position: relative;
+  margin: .25em;
+
+  .leaf {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    background-size: cover;
+
+    &.empty {
+      background-image: url(../images/clover0g.png);
+    }
+
+    &.one-a {
+      background-image: url(../images/clover8g.png);
+    }
+    &.one-b {
+      background-image: url(../images/clover7g.png);
+    }
+    &.two-a {
+      background-image: url(../images/clover5g.png);
+    }
+    &.two-b {
+      background-image: url(../images/clover6g.png);
+    }
+    &.three-a {
+      background-image: url(../images/clover2g.png);
+    }
+    &.three-b {
+      background-image: url(../images/clover1g.png);
+    }
+    &.four {
+      background-image: url(../images/clover9g.png);
+    }
+  }
+
+  &.gene1 {
+    .leaf.one-a {
+      background-image: url(../images/clover8y.png);
+    }
+  }
+  &.gene2 {
+    .leaf.one-b {
+      background-image: url(../images/clover7y.png);
+    }
+  }
+  &.gene3 {
+    .leaf.two-a {
+      background-image: url(../images/clover5y.png);
+    }
+  }
+  &.gene4 {
+    .leaf.two-b {
+      background-image: url(../images/clover6y.png);
+    }
+  }
+  &.gene5 {
+    .leaf.three-a {
+      background-image: url(../images/clover2y.png);
+    }
+  }
+  &.gene6 {
+    .leaf.three-b {
+      background-image: url(../images/clover1y.png);
+    }
+  }
+  &.gene7 {
+    .leaf.four {
+      background-image: url(../images/clover9y.png);
+    }
+  }
+  &.gene1.gene2.gene3.gene4.gene5.gene6.gene7 {
+    .leaf.four {
+      background-image: url(../images/clover34y.png);
+    }
+  }
+}

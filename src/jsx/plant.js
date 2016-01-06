@@ -1,6 +1,15 @@
+import Guid from 'guid';
+
 class Plant {
-	constructor(genes) {
-		this.genes = genes;
+	constructor(data) {
+		if(!data) {
+			data = {};
+		}
+
+		this.genes = data.genes || [];
+		this.location = data.location || 'inventory';
+		this.id = data.id || Guid.raw();
+
 	}
 }
 
