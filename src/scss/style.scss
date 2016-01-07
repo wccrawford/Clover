@@ -1,7 +1,7 @@
 .inventory {
   padding: .25em;
   margin: .25em;
-  border: 1px solid blue;
+  border: 1px solid green;
   border-radius: .25em;
 }
 
@@ -11,6 +11,12 @@
   display: inline-block;
   position: relative;
   margin: .25em;
+  border: 1px solid transparent;
+  border-radius: .25em;
+
+  &.selected {
+    border-color: green;
+  }
 
   .leaf {
     position: absolute;
@@ -85,6 +91,31 @@
   &.gene1.gene2.gene3.gene4.gene5.gene6.gene7 {
     .leaf.four {
       background-image: url(../images/clover34y.png);
+    }
+  }
+}
+
+.breeder {
+  margin: .25em;
+  padding: .25em;
+  border: 1px solid green;
+  border-radius: .25em;
+
+  display: inline-block;
+
+  width: 12em;
+
+  .progress {
+    margin-bottom: 0;
+    height: 10px;
+
+    .progress-bar {
+      background-image: -webkit-linear-gradient(top, #40c440 0, #379a37 100%);
+      background-image: -o-linear-gradient(top,#40C440 0,#379a37 100%);
+      background-image: -webkit-gradient(linear,left top,left bottom,from(#40C440),to(#379a37));
+      background-image: linear-gradient(to bottom,#40C440 0,#379a37 100%);
+      filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff40C440', endColorstr='#ff379a37', GradientType=0);
+      transition: width .1s ease;
     }
   }
 }

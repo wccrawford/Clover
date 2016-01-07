@@ -11,6 +11,7 @@ class Game extends React.Component {
 
 		this.state = {
 			counter: 0,
+			maxInventory: 20,
 			items: [
 				new Plant(),
 				new Plant(),
@@ -47,16 +48,54 @@ class Game extends React.Component {
 				new Plant({
 					genes: [1,2,3,4,5,6,7]
 				}),
+				new Plant({
+					location: 'breeder_0'
+				}),
+				new Plant({
+					genes: [2,3,6],
+					location: 'breeder_1'
+				}),
 			    new Plant({
-				    location: 'breeder_0'
+				    location: 'breeder_1'
 			    })
 			],
 			breeders: [
 				{
+					progress: 10,
+					clovers: []
+				},
+				{
+					progress: 50,
 					clovers: []
 				}
-			]
+			],
+			inventory: []
+		};
+
+		this.state.breeders = this.setBreederItems(this.state.breeders);
+
+		this.state.inventory = this.getInventoryItems();
+	}
+
+	setBreederItems(breeders) {
+		var self = this;
+
+		for(var b=0; b<breeders.length; b++) {
+			var breederItems = self.state.items.filter(function (item, index) {
+				return item.location == 'breeder_' + b;
+			});
+			breeders[b].clovers = breederItems;
 		}
+
+		return breeders;
+	}
+
+	getInventoryItems() {
+		var inventoryItems = this.state.items.filter(function(item) {
+			return item.location == 'inventory';
+		});
+
+		return inventoryItems;
 	}
 
 	componentDidMount() {
@@ -76,42 +115,44 @@ class Game extends React.Component {
 	}
 
 	componentWillUnmount() {
-		clearInterval(this.timerHandle);
 	}
 
 	tick(deltaTime) {
+		var breeders = this.state.breeders;
+		for(var b=0; b<breeders.length; b++) {
+			var breeder = breeders[b];
+
+			if(this.refs['breeder' + b]) {
+				this.refs['breeder' + b].tick(deltaTime);
+			}
+			//if(breeder.clovers.length == 2) {
+			//	breeder.progress += deltaTime * 10;
+			//	if (breeder.progress >= 100) {
+			//		breeder.progress -= 100;
+			//	}
+			//} else {
+			//	breeder.progress = 0;
+			//}
+		}
+
 		//this.setState({
-		//	counter: this.state.counter + deltaTime
+		//	breeders: breeders
 		//});
 	}
 
 	render() {
-		var self = this;
-
-		//var time = parseFloat(this.state.counter).toFixed(2);
-		var breeders = this.state.breeders.map(function(item, index) {
-			var breederItems =  self.state.items.filter(function(item) {
-				return item.location == 'breeder_'+index;
-			});
-
-			var data = {
-				clovers: breederItems
-			};
-
+		var breeders = this.state.breeders.map(function(breeder, index) {
 			return (
-				<Breeder key={index} data={data}/>
+				<Breeder key={index} data={breeder} ref={'breeder' + index}/>
 			);
-		});
-		var inventoryItems = this.state.items.filter(function(item) {
-			return item.location == 'inventory';
 		});
 		return (
 			<div>
 				<div className="row">
-					<div className="col-xs-8">
-						<Inventory items={inventoryItems}/>
+					<div className="col-xs-6 col-md-8">
+						<Inventory items={this.state.inventory} maxInventory={this.state.maxInventory}/>
 					</div>
-					<div className="col-xs-4">
+					<div className="col-xs-6 col-md-4">
 						{breeders}
 					</div>
 				</div>

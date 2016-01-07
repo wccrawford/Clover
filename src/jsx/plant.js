@@ -9,7 +9,6 @@ class Plant {
 		this.genes = data.genes || [];
 		this.location = data.location || 'inventory';
 		this.id = data.id || Guid.raw();
-
 	}
 }
 
