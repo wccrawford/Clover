@@ -46,6 +46,14 @@
 
 	'use strict';
 
+	var _react = __webpack_require__(4);
+
+	var _react2 = _interopRequireDefault(_react);
+
+	var _reactDom = __webpack_require__(164);
+
+	var _reactDom2 = _interopRequireDefault(_reactDom);
+
 	var _plant = __webpack_require__(1);
 
 	var _plant2 = _interopRequireDefault(_plant);
@@ -56,7 +64,7 @@
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	React.render(React.createElement(_game2.default, null), document.getElementById('wrapper'));
+	_reactDom2.default.render(_react2.default.createElement(_game2.default, null), document.getElementById('wrapper'));
 
 /***/ },
 /* 1 */
@@ -209,6 +217,7 @@
 
 			_this.state = {
 				counter: 0,
+				maxInventory: 20,
 				items: [new _plant2.default(), new _plant2.default(), new _plant2.default({
 					genes: [1]
 				}), new _plant2.default({
@@ -233,15 +242,52 @@
 					genes: [1, 2, 3, 4, 5, 6, 7]
 				}), new _plant2.default({
 					location: 'breeder_0'
+				}), new _plant2.default({
+					genes: [2, 3, 6],
+					location: 'breeder_1'
+				}), new _plant2.default({
+					location: 'breeder_1'
 				})],
 				breeders: [{
+					progress: 10,
 					clovers: []
-				}]
+				}, {
+					progress: 50,
+					clovers: []
+				}],
+				inventory: []
 			};
+
+			_this.state.breeders = _this.setBreederItems(_this.state.breeders);
+
+			_this.state.inventory = _this.getInventoryItems();
 			return _this;
 		}
 
 		_createClass(Game, [{
+			key: 'setBreederItems',
+			value: function setBreederItems(breeders) {
+				var self = this;
+
+				for (var b = 0; b < breeders.length; b++) {
+					var breederItems = self.state.items.filter(function (item, index) {
+						return item.location == 'breeder_' + b;
+					});
+					breeders[b].clovers = breederItems;
+				}
+
+				return breeders;
+			}
+		}, {
+			key: 'getInventoryItems',
+			value: function getInventoryItems() {
+				var inventoryItems = this.state.items.filter(function (item) {
+					return item.location == 'inventory';
+				});
+
+				return inventoryItems;
+			}
+		}, {
 			key: 'componentDidMount',
 			value: function componentDidMount() {
 				var self = this;
@@ -260,35 +306,36 @@
 			}
 		}, {
 			key: 'componentWillUnmount',
-			value: function componentWillUnmount() {
-				clearInterval(this.timerHandle);
-			}
+			value: function componentWillUnmount() {}
 		}, {
 			key: 'tick',
 			value: function tick(deltaTime) {
+				var breeders = this.state.breeders;
+				for (var b = 0; b < breeders.length; b++) {
+					var breeder = breeders[b];
+
+					if (this.refs['breeder' + b]) {
+						this.refs['breeder' + b].tick(deltaTime);
+					}
+					//if(breeder.clovers.length == 2) {
+					//	breeder.progress += deltaTime * 10;
+					//	if (breeder.progress >= 100) {
+					//		breeder.progress -= 100;
+					//	}
+					//} else {
+					//	breeder.progress = 0;
+					//}
+				}
+
 				//this.setState({
-				//	counter: this.state.counter + deltaTime
+				//	breeders: breeders
 				//});
 			}
 		}, {
 			key: 'render',
 			value: function render() {
-				var self = this;
-
-				//var time = parseFloat(this.state.counter).toFixed(2);
-				var breeders = this.state.breeders.map(function (item, index) {
-					var breederItems = self.state.items.filter(function (item) {
-						return item.location == 'breeder_' + index;
-					});
-
-					var data = {
-						clovers: breederItems
-					};
-
-					return _react2.default.createElement(_breeder2.default, { key: index, data: data });
-				});
-				var inventoryItems = this.state.items.filter(function (item) {
-					return item.location == 'inventory';
+				var breeders = this.state.breeders.map(function (breeder, index) {
+					return _react2.default.createElement(_breeder2.default, { key: index, data: breeder, ref: 'breeder' + index });
 				});
 				return _react2.default.createElement(
 					'div',
@@ -298,12 +345,12 @@
 						{ className: 'row' },
 						_react2.default.createElement(
 							'div',
-							{ className: 'col-xs-8' },
-							_react2.default.createElement(_inventory2.default, { items: inventoryItems })
+							{ className: 'col-xs-6 col-md-8' },
+							_react2.default.createElement(_inventory2.default, { items: this.state.inventory, maxInventory: this.state.maxInventory })
 						),
 						_react2.default.createElement(
 							'div',
-							{ className: 'col-xs-4' },
+							{ className: 'col-xs-6 col-md-4' },
 							breeders
 						)
 					)
@@ -18934,7 +18981,7 @@
 
 	'use strict';
 
-	module.exports = '0.14.5';
+	module.exports = '0.14.6';
 
 /***/ },
 /* 150 */
@@ -19934,20 +19981,54 @@
 		function Inventory(props) {
 			_classCallCheck(this, Inventory);
 
-			return _possibleConstructorReturn(this, Object.getPrototypeOf(Inventory).call(this, props));
+			var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(Inventory).call(this, props));
+
+			_this.state = {
+				selectedClover: null
+			};
+			return _this;
 		}
 
 		_createClass(Inventory, [{
+			key: 'deselectClover',
+			value: function deselectClover() {
+				this.state.selectedClover = null;
+			}
+		}, {
+			key: 'selectClover',
+			value: function selectClover(id) {
+				this.setState({
+					selectedClover: id
+				});
+			}
+		}, {
 			key: 'render',
 			value: function render() {
+				var self = this;
+
 				var items = this.props.items.map(function (item, index) {
-					return _react2.default.createElement(_clover2.default, { key: item.id, data: item });
+					var selected = item.id == self.state.selectedClover;
+					return _react2.default.createElement(_clover2.default, { key: item.id, data: item, selected: selected, selectClover: self.selectClover.bind(self) });
 				});
+
+				var count = items.length;
+				var max = this.props.maxInventory;
 
 				return _react2.default.createElement(
 					'div',
 					{ className: 'inventory' },
-					items
+					_react2.default.createElement(
+						'div',
+						null,
+						items
+					),
+					_react2.default.createElement(
+						'div',
+						{ className: 'countHolder' },
+						count,
+						' / ',
+						max
+					)
 				);
 			}
 		}]);
@@ -19991,15 +20072,25 @@
 		}
 
 		_createClass(Clover, [{
+			key: 'selectClover',
+			value: function selectClover() {
+				if (this.props.selectClover) {
+					this.props.selectClover(this.props.data.id);
+				}
+			}
+		}, {
 			key: 'render',
 			value: function render() {
 				var classes = ['clover'].concat(this.props.data.genes.map(function (gene) {
 					return 'gene' + gene;
 				}));
+				if (this.props.selected) {
+					classes.push('selected');
+				}
 
 				return _react2.default.createElement(
 					'div',
-					{ className: classes.join(' ') },
+					{ className: classes.join(' '), onClick: this.selectClover.bind(this) },
 					_react2.default.createElement('div', { className: 'leaf one-a' }),
 					_react2.default.createElement('div', { className: 'leaf one-b' }),
 					_react2.default.createElement('div', { className: 'leaf two-a' }),
@@ -20050,10 +20141,31 @@
 		function Breeder(props) {
 			_classCallCheck(this, Breeder);
 
-			return _possibleConstructorReturn(this, Object.getPrototypeOf(Breeder).call(this, props));
+			var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(Breeder).call(this, props));
+
+			_this.state = {
+				progress: props.data.progress
+			};
+			return _this;
 		}
 
 		_createClass(Breeder, [{
+			key: 'tick',
+			value: function tick(deltaTime) {
+				var progress = 0;
+
+				if (this.props.data.clovers.length == 2) {
+					progress = this.state.progress + deltaTime * 10;
+
+					if (progress > 100) {
+						progress -= 100;
+					}
+				}
+				this.setState({
+					progress: progress
+				});
+			}
+		}, {
 			key: 'render',
 			value: function render() {
 				var clovers = [_react2.default.createElement(
@@ -20073,10 +20185,23 @@
 						clovers[1] = _react2.default.createElement(_clover2.default, { key: this.props.data.clovers[1].id, data: this.props.data.clovers[1] });
 					}
 				}
+				var style = {
+					width: this.state.progress + "%"
+				};
+
 				return _react2.default.createElement(
 					'div',
 					{ className: 'breeder' },
-					clovers
+					_react2.default.createElement(
+						'div',
+						null,
+						clovers
+					),
+					_react2.default.createElement(
+						'div',
+						{ className: 'progress' },
+						_react2.default.createElement('div', { className: 'progress-bar', role: 'progressbar', style: style })
+					)
 				);
 			}
 		}]);
@@ -20085,6 +20210,15 @@
 	})(_react2.default.Component);
 
 	exports.default = Breeder;
+
+/***/ },
+/* 164 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	module.exports = __webpack_require__(6);
+
 
 /***/ }
 /******/ ]);
