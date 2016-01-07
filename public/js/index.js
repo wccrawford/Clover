@@ -260,7 +260,7 @@
 
 			_this.state.breeders = _this.setBreederItems(_this.state.breeders);
 
-			_this.state.inventory = _this.getInventoryItems();
+			_this.state.inventory = _this.setInventoryItems(_this.state.items);
 			return _this;
 		}
 
@@ -279,13 +279,43 @@
 				return breeders;
 			}
 		}, {
-			key: 'getInventoryItems',
-			value: function getInventoryItems() {
-				var inventoryItems = this.state.items.filter(function (item) {
+			key: 'setInventoryItems',
+			value: function setInventoryItems(items) {
+				var inventoryItems = items.filter(function (item) {
 					return item.location == 'inventory';
 				});
 
 				return inventoryItems;
+			}
+		}, {
+			key: 'getSelectedClover',
+			value: function getSelectedClover() {
+				return this.refs.inventory.getSelectedClover();
+			}
+		}, {
+			key: 'transferClover',
+			value: function transferClover(id, location) {
+				if (!id) {
+					id = this.getSelectedClover();
+				}
+
+				if (id) {
+					var inventory = this.state.items;
+					var changed = false;
+					for (var i = 0; i < inventory.length; i++) {
+						if (inventory[i].id == id) {
+							inventory[i].location = location;
+							changed = true;
+						}
+					}
+					if (changed) {
+						this.setState({
+							items: inventory,
+							inventory: this.setInventoryItems(inventory),
+							breeders: this.setBreederItems(this.state.breeders)
+						});
+					}
+				}
 			}
 		}, {
 			key: 'componentDidMount',
@@ -334,8 +364,12 @@
 		}, {
 			key: 'render',
 			value: function render() {
+				var self = this;
+				function transferClover(id, location) {
+					self.transferClover(id, location);
+				}
 				var breeders = this.state.breeders.map(function (breeder, index) {
-					return _react2.default.createElement(_breeder2.default, { key: index, data: breeder, ref: 'breeder' + index });
+					return _react2.default.createElement(_breeder2.default, { key: index, data: breeder, ref: 'breeder' + index, index: index, transferClover: transferClover });
 				});
 				return _react2.default.createElement(
 					'div',
@@ -346,7 +380,7 @@
 						_react2.default.createElement(
 							'div',
 							{ className: 'col-xs-6 col-md-8' },
-							_react2.default.createElement(_inventory2.default, { items: this.state.inventory, maxInventory: this.state.maxInventory })
+							_react2.default.createElement(_inventory2.default, { items: this.state.inventory, maxInventory: this.state.maxInventory, ref: 'inventory' })
 						),
 						_react2.default.createElement(
 							'div',
@@ -19990,6 +20024,11 @@
 		}
 
 		_createClass(Inventory, [{
+			key: 'getSelectedClover',
+			value: function getSelectedClover() {
+				return this.state.selectedClover;
+			}
+		}, {
 			key: 'deselectClover',
 			value: function deselectClover() {
 				this.state.selectedClover = null;
@@ -20166,23 +20205,33 @@
 				});
 			}
 		}, {
+			key: 'removeClover',
+			value: function removeClover(id) {
+				this.props.transferClover(id, 'inventory');
+			}
+		}, {
+			key: 'transferClover',
+			value: function transferClover() {
+				this.props.transferClover(null, 'breeder_' + this.props.index);
+			}
+		}, {
 			key: 'render',
 			value: function render() {
 				var clovers = [_react2.default.createElement(
 					'div',
-					{ key: 'ec_0', className: 'clover' },
+					{ key: 'ec_0', className: 'clover', onClick: this.transferClover.bind(this) },
 					_react2.default.createElement('div', { className: 'leaf empty' })
 				), _react2.default.createElement(
 					'div',
-					{ key: 'ec_1', className: 'clover' },
+					{ key: 'ec_1', className: 'clover', onClick: this.transferClover.bind(this) },
 					_react2.default.createElement('div', { className: 'leaf empty' })
 				)];
 				if (this.props.data) {
 					if (this.props.data.clovers[0]) {
-						clovers[0] = _react2.default.createElement(_clover2.default, { key: this.props.data.clovers[0].id, data: this.props.data.clovers[0] });
+						clovers[0] = _react2.default.createElement(_clover2.default, { key: this.props.data.clovers[0].id, data: this.props.data.clovers[0], selectClover: this.removeClover.bind(this) });
 					}
 					if (this.props.data.clovers[1]) {
-						clovers[1] = _react2.default.createElement(_clover2.default, { key: this.props.data.clovers[1].id, data: this.props.data.clovers[1] });
+						clovers[1] = _react2.default.createElement(_clover2.default, { key: this.props.data.clovers[1].id, data: this.props.data.clovers[1], selectClover: this.removeClover.bind(this) });
 					}
 				}
 				var style = {

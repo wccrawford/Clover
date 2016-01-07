@@ -74,7 +74,7 @@ class Game extends React.Component {
 
 		this.state.breeders = this.setBreederItems(this.state.breeders);
 
-		this.state.inventory = this.getInventoryItems();
+		this.state.inventory = this.setInventoryItems(this.state.items);
 	}
 
 	setBreederItems(breeders) {
@@ -90,12 +90,40 @@ class Game extends React.Component {
 		return breeders;
 	}
 
-	getInventoryItems() {
-		var inventoryItems = this.state.items.filter(function(item) {
+	setInventoryItems(items) {
+		var inventoryItems = items.filter(function(item) {
 			return item.location == 'inventory';
 		});
 
 		return inventoryItems;
+	}
+
+	getSelectedClover() {
+		return this.refs.inventory.getSelectedClover();
+	}
+
+	transferClover(id, location) {
+		if (!id) {
+			id = this.getSelectedClover();
+		}
+
+		if (id) {
+			var inventory = this.state.items;
+			var changed = false;
+			for(var i=0; i<inventory.length; i++) {
+				if(inventory[i].id == id) {
+					inventory[i].location = location;
+					changed = true;
+				}
+			}
+			if (changed) {
+				this.setState({
+					items: inventory,
+					inventory: this.setInventoryItems(inventory),
+					breeders: this.setBreederItems(this.state.breeders)
+				});
+			}
+		}
 	}
 
 	componentDidMount() {
@@ -141,16 +169,20 @@ class Game extends React.Component {
 	}
 
 	render() {
+		var self = this;
+		function transferClover(id, location) {
+			self.transferClover(id, location);
+		}
 		var breeders = this.state.breeders.map(function(breeder, index) {
 			return (
-				<Breeder key={index} data={breeder} ref={'breeder' + index}/>
+				<Breeder key={index} data={breeder} ref={'breeder' + index} index={index} transferClover={transferClover}/>
 			);
 		});
 		return (
 			<div>
 				<div className="row">
 					<div className="col-xs-6 col-md-8">
-						<Inventory items={this.state.inventory} maxInventory={this.state.maxInventory}/>
+						<Inventory items={this.state.inventory} maxInventory={this.state.maxInventory} ref="inventory"/>
 					</div>
 					<div className="col-xs-6 col-md-4">
 						{breeders}

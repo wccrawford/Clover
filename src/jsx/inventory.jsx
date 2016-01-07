@@ -11,6 +11,10 @@ class Inventory extends React.Component {
 		};
 	}
 
+	getSelectedClover() {
+		return this.state.selectedClover;
+	}
+
 	deselectClover() {
 		this.state.selectedClover = null;
 	}
