@@ -59,8 +59,7 @@
   padding: .25em;
   border: 1px solid green;
   border-radius: .25em;
-  display: inline-block;
-  width: 12em; }
+  display: inline-block; }
   .breeder .progress {
     margin-bottom: 0;
     height: 10px; }

@@ -1,71 +1,28 @@
 import React from 'react';
+import Guid from 'guid';
 
 import Inventory from './inventory.jsx';
 import Clover from './clover.jsx';
 import Plant from './plant.js';
 import Breeder from './breeder.jsx';
+import Options from './options.jsx';
 
 class Game extends React.Component {
 	constructor(props) {
 		super(props);
 
-		this.state = {
+		this.state = this.loadState() || {
 			counter: 0,
 			maxInventory: 20,
+			mutationChance: 5,
+			gold: 0,
 			items: [
-				new Plant(),
-				new Plant(),
-				new Plant({
-					genes: [1]
-				}),
-				new Plant({
-					genes: [2]
-				}),
-				new Plant({
-					genes: [3]
-				}),
-				new Plant({
-					genes: [4]
-				}),
-				new Plant({
-					genes: [5]
-				}),
-				new Plant({
-					genes: [6]
-				}),
-				new Plant({
-					genes: [7]
-				}),
-				new Plant({
-					genes: [1,2]
-				}),
-				new Plant({
-					genes: [3,4]
-				}),
-				new Plant({
-					genes: [5,6]
-				}),
-				new Plant({
-					genes: [1,2,3,4,5,6,7]
-				}),
-				new Plant({
-					location: 'breeder_0'
-				}),
-				new Plant({
-					genes: [2,3,6],
-					location: 'breeder_1'
-				}),
-			    new Plant({
-				    location: 'breeder_1'
-			    })
+				this.createClover(),
+				this.createClover()
 			],
 			breeders: [
 				{
-					progress: 10,
-					clovers: []
-				},
-				{
-					progress: 50,
+					progress: 0,
 					clovers: []
 				}
 			],
@@ -75,6 +32,23 @@ class Game extends React.Component {
 		this.state.breeders = this.setBreederItems(this.state.breeders);
 
 		this.state.inventory = this.setInventoryItems(this.state.items);
+	}
+
+	componentDidUpdate() {
+		localStorage.setItem('clover-state', JSON.stringify(this.state));
+	}
+
+	loadState() {
+		var state = localStorage.getItem('clover-state');
+		if(state){
+			try {
+				state = JSON.parse(state);
+			} catch(exc) {
+				state = null;
+			}
+		}
+
+		return state;
 	}
 
 	setBreederItems(breeders) {
@@ -126,6 +100,64 @@ class Game extends React.Component {
 		}
 	}
 
+	sellSelectedClover() {
+		if(this.state.items.length <= 2) {
+			return;
+		}
+		var id = this.getSelectedClover();
+
+		if(id) {
+			var inventory = this.state.items;
+			for(var i=0; i<inventory.length; i++) {
+				if(inventory[i].id == id) {
+					var clover = inventory.splice(i, 1);
+					if(clover[0]) {
+						var gold = Math.pow(2, clover[0].genes.length);
+						this.setState({
+							gold: this.state.gold + gold
+						});
+					}
+				}
+			}
+
+			this.setState({
+				items: inventory,
+				inventory: this.setInventoryItems(inventory)
+			});
+		}
+	}
+
+	addClover(data) {
+		if(this.state.inventory.length < this.state.maxInventory) {
+			var items = this.state.items;
+			items.push(this.createClover(data));
+			this.setState({
+				items: items,
+				inventory: this.setInventoryItems(items)
+			});
+		}
+	}
+
+	createClover(data) {
+		var clover = {
+			id: Guid.raw(),
+			location: 'inventory',
+			genes: []
+		};
+		if(data) {
+			if(data.id) {
+				clover.id = data.id;
+			}
+			if(data.location) {
+				clover.location = data.location;
+			}
+			if(data.genes) {
+				clover.genes = data.genes;
+			}
+		}
+		return clover;
+	}
+
 	componentDidMount() {
 		var self = this;
 		this.time = new Date().getTime();
@@ -175,17 +207,40 @@ class Game extends React.Component {
 		}
 		var breeders = this.state.breeders.map(function(breeder, index) {
 			return (
-				<Breeder key={index} data={breeder} ref={'breeder' + index} index={index} transferClover={transferClover}/>
+				<Breeder key={index} data={breeder} ref={'breeder' + index} index={index} transferClover={transferClover} addClover={self.addClover.bind(self)} mutationChance={self.state.mutationChance}/>
 			);
 		});
 		return (
 			<div>
-				<div className="row">
-					<div className="col-xs-6 col-md-8">
-						<Inventory items={this.state.inventory} maxInventory={this.state.maxInventory} ref="inventory"/>
+				<ul className="nav nav-tabs" role="tablist">
+					<li role="presentation" className="active"><a href="#home" aria-controls="home" role="tab" data-toggle="tab">Clovers</a></li>
+					<li role="presentation"><a href="#upgrades" aria-controls="upgrades" role="tab" data-toggle="tab">Upgrades</a></li>
+					<li role="presentation"><a href="#options" aria-controls="options" role="tab" data-toggle="tab">Options</a></li>
+				</ul>
+				<div className="tab-content">
+					<div role="tabpanel" className="tab-pane active" id="home">
+						<div className="container-fluid">
+						<div className="row">
+							<div className="col-xs-12">
+								Gold: {this.state.gold}
+							</div>
+						</div>
+						<div className="row">
+							<div className="col-xs-9 col-md-8">
+								<Inventory items={this.state.inventory} maxInventory={this.state.maxInventory} ref="inventory"/>
+							</div>
+							<div className="col-xs-3 col-md-4">
+								{breeders}
+							</div>
+						</div>
+						<button id="sellButton" onClick={this.sellSelectedClover.bind(this)}>Sell</button>
+						</div>
 					</div>
-					<div className="col-xs-6 col-md-4">
-						{breeders}
+					<div role="tabpanel" className="tab-pane" id="upgrades">
+						Upgrade Panel
+					</div>
+					<div role="tabpanel" className="tab-pane" id="options">
+						<Options />
 					</div>
 				</div>
 			</div>

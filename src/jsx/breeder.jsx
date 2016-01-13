@@ -19,11 +19,30 @@ class Breeder extends React.Component {
 
 			if(progress > 100) {
 				progress -= 100;
+				this.addClover(this.props.data.clovers);
 			}
 		}
 		this.setState({
 			progress: progress
 		});
+	}
+
+	addClover(clovers) {
+		var genes = [];
+
+		for(var g=1; g<=7; g++) {
+			var c = Math.floor(Math.random()*2);
+			var gene = clovers[c].genes.indexOf(g) !== -1;
+			var mutation = (Math.random()*100);
+			if(mutation <= this.props.mutationChance) {
+				gene = !gene;
+			}
+			if(gene) {
+				genes.push(g);
+			}
+		}
+
+		this.props.addClover({genes: genes});
 	}
 
 	removeClover(id) {
