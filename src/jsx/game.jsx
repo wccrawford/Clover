@@ -3,39 +3,60 @@ import Guid from 'guid';
 
 import Inventory from './inventory.jsx';
 import Clover from './clover.jsx';
-import Plant from './plant.js';
+//import Plant from './plant.js';
 import Breeder from './breeder.jsx';
 import Options from './options.jsx';
+import Upgrades from './upgrades.jsx';
+
+import UpgradeData from './upgradedata.js';
 
 class Game extends React.Component {
 	constructor(props) {
 		super(props);
 
+		this.defaultStats = {
+			maxInventory: 5,
+			mutationChance: 1,
+			breederCount: 1
+		};
+
 		this.state = this.loadState() || {
 			counter: 0,
-			maxInventory: 20,
-			mutationChance: 5,
+			maxInventory: 5,
+			mutationChance: 1,
+			breederCount: 1,
 			gold: 0,
 			items: [
 				this.createClover(),
 				this.createClover()
 			],
-			breeders: [
-				{
-					progress: 0,
-					clovers: []
-				}
-			],
-			inventory: []
+			breeders: [],
+			inventory: [],
+			upgrades: []
 		};
 
-		this.state.breeders = this.setBreederItems(this.state.breeders);
+		Object.assign(this.state, this.processUpgrades(this.state));
+
+		this.state.breeders = this.setBreederItems(this.state);
 
 		this.state.inventory = this.setInventoryItems(this.state.items);
 	}
 
 	componentDidUpdate() {
 		localStorage.setItem('clover-state', JSON.stringify(this.state));
+	}
+
+	processUpgrades(state) {
+		var data = Object.assign({}, this.defaultStats);
+		for(var upgrade in UpgradeData) {
+			if(state.upgrades.indexOf(upgrade) != -1) {
+				if(typeof(UpgradeData[upgrade].process) == 'function') {
+					data = UpgradeData[upgrade].process(data);
+				}
+			}
+		}
+
+		return data;
 	}
 
 	loadState() {
@@ -51,11 +72,18 @@ class Game extends React.Component {
 		return state;
 	}
 
-	setBreederItems(breeders) {
+	setBreederItems(state) {
 		var self = this;
+		var breeders = state.breeders;
 
-		for(var b=0; b<breeders.length; b++) {
-			var breederItems = self.state.items.filter(function (item, index) {
+		for(var b=0; b<state.breederCount; b++) {
+			if(!breeders[b]) {
+				breeders[b] = {
+					progress: 0,
+					clovers: []
+				}
+			}
+			var breederItems = state.items.filter(function (item, index) {
 				return item.location == 'breeder_' + b;
 			});
 			breeders[b].clovers = breederItems;
@@ -94,7 +122,7 @@ class Game extends React.Component {
 				this.setState({
 					items: inventory,
 					inventory: this.setInventoryItems(inventory),
-					breeders: this.setBreederItems(this.state.breeders)
+					breeders: this.setBreederItems(this.state)
 				});
 			}
 		}
@@ -200,6 +228,20 @@ class Game extends React.Component {
 		//});
 	}
 
+	buyUpgrade(key) {
+		var state = this.state;
+		state.upgrades.push(key);
+
+		var data = this.processUpgrades(state);
+		data.breeders = state.breeders;
+		data.items = state.items;
+		data.gold = this.state.gold - UpgradeData[key].cost;
+		data.upgrades = state.upgrades;
+		data.breeders = this.setBreederItems(data);
+
+		this.setState(data);
+	}
+
 	render() {
 		var self = this;
 		function transferClover(id, location) {
@@ -233,11 +275,11 @@ class Game extends React.Component {
 								{breeders}
 							</div>
 						</div>
-						<button id="sellButton" onClick={this.sellSelectedClover.bind(this)}>Sell</button>
+						<button id="sellButton" className="btn btn-primary" onClick={this.sellSelectedClover.bind(this)}>Sell</button>
 						</div>
 					</div>
 					<div role="tabpanel" className="tab-pane" id="upgrades">
-						Upgrade Panel
+						<Upgrades upgradesOwned={this.state.upgrades} buyUpgrade={this.buyUpgrade.bind(this)} gold={this.state.gold}/>
 					</div>
 					<div role="tabpanel" className="tab-pane" id="options">
 						<Options />

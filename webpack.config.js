@@ -3,7 +3,7 @@ var webpack = require('webpack');
 
 module.exports = {
 	entry: './src/jsx/index.jsx',
-	output: { path: __dirname, filename: 'public/js/index.js' },
+	output: { path: __dirname+'/public', filename: 'js/index.js' },
 	module: {
 		loaders: [
 			{
@@ -12,6 +12,30 @@ module.exports = {
 				exclude: /node_modules/,
 				query: {
 					presets: ['es2015', 'react']
+				}
+			},
+			{
+				test: /.scss$/,
+				loader: 'style!css!sass',
+				exclude: /node_modules/
+			},
+			{
+				test: /.json$/,
+				loader: 'json',
+				exclude: /node_modules/
+			},
+			{
+				test: /.jpg$/,
+				loader: 'file',
+				query: {
+					name: 'images/[name].[ext]'
+				}
+			},
+			{
+				test: /.png$/,
+				loader: 'file',
+				query: {
+					name: 'images/[name].[ext]'
 				}
 			}
 		]
