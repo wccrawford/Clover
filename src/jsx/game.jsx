@@ -7,6 +7,8 @@ import Clover from './clover.jsx';
 import Breeder from './breeder.jsx';
 import Options from './options.jsx';
 import Upgrades from './upgrades.jsx';
+import Help from './help.jsx';
+import Achievements from './achievements.jsx';
 
 import UpgradeData from './upgradedata.js';
 
@@ -17,7 +19,8 @@ class Game extends React.Component {
 		this.defaultStats = {
 			maxInventory: 5,
 			mutationChance: 1,
-			breederCount: 1
+			breederCount: 1,
+			breederTime: 15,
 		};
 
 		this.state = this.loadState() || {
@@ -25,6 +28,7 @@ class Game extends React.Component {
 			maxInventory: 5,
 			mutationChance: 1,
 			breederCount: 1,
+			breederTime: 15,
 			gold: 0,
 			items: [
 				this.createClover(),
@@ -163,6 +167,11 @@ class Game extends React.Component {
 				items: items,
 				inventory: this.setInventoryItems(items)
 			});
+		} else if(this.state.upgrades.indexOf('sellExcess') != -1) {
+			var gold = Math.pow(2, data.genes.length);
+			this.setState({
+				gold: this.state.gold + gold
+			});
 		}
 	}
 
@@ -249,7 +258,7 @@ class Game extends React.Component {
 		}
 		var breeders = this.state.breeders.map(function(breeder, index) {
 			return (
-				<Breeder key={index} data={breeder} ref={'breeder' + index} index={index} transferClover={transferClover} addClover={self.addClover.bind(self)} mutationChance={self.state.mutationChance}/>
+				<Breeder key={index} data={breeder} ref={'breeder' + index} index={index} transferClover={transferClover} addClover={self.addClover.bind(self)} mutationChance={self.state.mutationChance} breederTime={self.state.breederTime}/>
 			);
 		});
 		return (
@@ -258,6 +267,8 @@ class Game extends React.Component {
 					<li role="presentation" className="active"><a href="#home" aria-controls="home" role="tab" data-toggle="tab">Clovers</a></li>
 					<li role="presentation"><a href="#upgrades" aria-controls="upgrades" role="tab" data-toggle="tab">Upgrades</a></li>
 					<li role="presentation"><a href="#options" aria-controls="options" role="tab" data-toggle="tab">Options</a></li>
+					<li role="presentation"><a href="#achievements" aria-controls="achievements" role="tab" data-toggle="tab">Achievements</a></li>
+					<li role="presentation"><a href="#help" aria-controls="help" role="tab" data-toggle="tab">Help</a></li>
 				</ul>
 				<div className="tab-content">
 					<div role="tabpanel" className="tab-pane active" id="home">
@@ -283,6 +294,12 @@ class Game extends React.Component {
 					</div>
 					<div role="tabpanel" className="tab-pane" id="options">
 						<Options />
+					</div>
+					<div role="tabpanel" className="tab-pane" id="achievements">
+						<Achievements />
+					</div>
+					<div role="tabpanel" className="tab-pane" id="help">
+						<Help />
 					</div>
 				</div>
 			</div>

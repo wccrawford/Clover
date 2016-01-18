@@ -106,7 +106,43 @@ var UpgradeData = {
 
       return data;
     }
-  }
+  },
+  breederTime1: {
+    description: "Reduce Breeder Time by 25%",
+    cost: 100,
+    process: function(data) {
+      data.breederTime *= .75;
+
+      return data;
+    }
+  },
+  breederTime2: {
+    description: "Reduce Breeder Time by 25%",
+    cost: 250,
+    process: function(data) {
+      data.breederTime *= .75;
+
+      return data;
+    }
+  },
+  breederTime3: {
+    description: "Reduce Breeder Time by 25%",
+    cost: 1000,
+    process: function(data) {
+      data.breederTime *= .75;
+
+      return data;
+    }
+  },
+  sellExcess: {
+    description: "Sell Clovers Instead of Discarding Them",
+    cost: 250,
+    process: function(data) {
+      data.breederTime *= .75;
+
+      return data;
+    }
+  },
 };
 
 export default UpgradeData;

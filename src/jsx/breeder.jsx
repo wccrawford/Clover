@@ -13,9 +13,10 @@ class Breeder extends React.Component {
 
 	tick(deltaTime) {
 		var progress = 0;
+		var multiplier = 100 / this.props.breederTime;
 
 		if(this.props.data.clovers.length == 2) {
-			progress = this.state.progress + (deltaTime * 10);
+			progress = this.state.progress + (deltaTime * multiplier);
 
 			if(progress > 100) {
 				progress -= 100;
