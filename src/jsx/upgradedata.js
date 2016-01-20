@@ -136,13 +136,8 @@ var UpgradeData = {
   },
   sellExcess: {
     description: "Sell Clovers Instead of Discarding Them",
-    cost: 250,
-    process: function(data) {
-      data.breederTime *= .75;
-
-      return data;
-    }
-  },
+    cost: 250
+  }
 };
 
 export default UpgradeData;

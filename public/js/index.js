@@ -20804,12 +20804,7 @@
 	  },
 	  sellExcess: {
 	    description: "Sell Clovers Instead of Discarding Them",
-	    cost: 250,
-	    process: function process(data) {
-	      data.breederTime *= .75;
-
-	      return data;
-	    }
+	    cost: 250
 	  }
 	};
 

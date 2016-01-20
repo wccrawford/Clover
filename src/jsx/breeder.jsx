@@ -30,12 +30,15 @@ class Breeder extends React.Component {
 
 	addClover(clovers) {
 		var genes = [];
+		var geneCount = (clovers[0].genes.length + clovers[1].genes.length) / 2;
+		var mutationChance = this.props.mutationChance / Math.pow(2, geneCount);
 
 		for(var g=1; g<=7; g++) {
 			var c = Math.floor(Math.random()*2);
 			var gene = clovers[c].genes.indexOf(g) !== -1;
 			var mutation = (Math.random()*100);
-			if(mutation <= this.props.mutationChance) {
+			console.log(mutationChance);
+			if(mutation <= mutationChance) {
 				gene = !gene;
 			}
 			if(gene) {

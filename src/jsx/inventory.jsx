@@ -26,12 +26,10 @@ class Inventory extends React.Component {
 	}
 
 	render() {
-		var self = this;
-
-		var items = this.props.items.map(function(item, index) {
-			var selected = (item.id == self.state.selectedClover);
+		var items = this.props.items.map(item => {
+			var selected = (item.id == this.state.selectedClover);
 			return (
-				<Clover key={item.id} data={item} selected={selected} selectClover={self.selectClover.bind(self)}/>
+				<Clover key={item.id} data={item} selected={selected} selectClover={this.selectClover.bind(this)}/>
 			);
 		});
 

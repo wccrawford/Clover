@@ -77,7 +77,6 @@ class Game extends React.Component {
 	}
 
 	setBreederItems(state) {
-		var self = this;
 		var breeders = state.breeders;
 
 		for(var b=0; b<state.breederCount; b++) {
@@ -87,7 +86,7 @@ class Game extends React.Component {
 					clovers: []
 				}
 			}
-			var breederItems = state.items.filter(function (item, index) {
+			var breederItems = state.items.filter(item => {
 				return item.location == 'breeder_' + b;
 			});
 			breeders[b].clovers = breederItems;
@@ -128,6 +127,7 @@ class Game extends React.Component {
 					inventory: this.setInventoryItems(inventory),
 					breeders: this.setBreederItems(this.state)
 				});
+				this.refs.inventory.deselectClover();
 			}
 		}
 	}
@@ -252,13 +252,9 @@ class Game extends React.Component {
 	}
 
 	render() {
-		var self = this;
-		function transferClover(id, location) {
-			self.transferClover(id, location);
-		}
-		var breeders = this.state.breeders.map(function(breeder, index) {
+		var breeders = this.state.breeders.map((breeder, index) => {
 			return (
-				<Breeder key={index} data={breeder} ref={'breeder' + index} index={index} transferClover={transferClover} addClover={self.addClover.bind(self)} mutationChance={self.state.mutationChance} breederTime={self.state.breederTime}/>
+				<Breeder key={index} data={breeder} ref={'breeder' + index} index={index} transferClover={this.transferClover.bind(this)} addClover={this.addClover.bind(this)} mutationChance={this.state.mutationChance} breederTime={this.state.breederTime}/>
 			);
 		});
 		return (
