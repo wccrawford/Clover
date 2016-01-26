@@ -64,7 +64,7 @@
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	__webpack_require__(170);
+	__webpack_require__(171);
 
 	document.addEventListener("contextmenu", function (e) {
 		e.preventDefault();
@@ -19820,6 +19820,10 @@
 
 	var _upgradedata2 = _interopRequireDefault(_upgradedata);
 
+	var _achievementdata = __webpack_require__(170);
+
+	var _achievementdata2 = _interopRequireDefault(_achievementdata);
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -19854,7 +19858,8 @@
 				items: [_this.createClover(), _this.createClover()],
 				breeders: [],
 				inventory: [],
-				upgrades: []
+				upgrades: [],
+				achievements: []
 			};
 
 			Object.assign(_this.state, _this.processUpgrades(_this.state));
@@ -19875,7 +19880,7 @@
 			value: function processUpgrades(state) {
 				var data = Object.assign({}, this.defaultStats);
 				for (var upgrade in _upgradedata2.default) {
-					if (state.upgrades.indexOf(upgrade) != -1) {
+					if (state.upgrades && state.upgrades.indexOf(upgrade) != -1) {
 						if (typeof _upgradedata2.default[upgrade].process == 'function') {
 							data = _upgradedata2.default[upgrade].process(data);
 						}
@@ -19901,7 +19906,6 @@
 		}, {
 			key: 'setBreederItems',
 			value: function setBreederItems(state) {
-				var self = this;
 				var breeders = state.breeders;
 
 				for (var b = 0; b < state.breederCount; b++) {
@@ -19911,7 +19915,7 @@
 							clovers: []
 						};
 					}
-					var breederItems = state.items.filter(function (item, index) {
+					var breederItems = state.items.filter(function (item) {
 						return item.location == 'breeder_' + b;
 					});
 					breeders[b].clovers = breederItems;
@@ -19929,15 +19933,15 @@
 				return inventoryItems;
 			}
 		}, {
-			key: 'getSelectedClover',
-			value: function getSelectedClover() {
-				return this.refs.inventory.getSelectedClover();
+			key: 'getSelectedClovers',
+			value: function getSelectedClovers() {
+				return this.refs.inventory.getSelectedClovers();
 			}
 		}, {
 			key: 'transferClover',
 			value: function transferClover(id, location) {
 				if (!id) {
-					id = this.getSelectedClover();
+					id = this.getSelectedClovers()[0];
 				}
 
 				if (id) {
@@ -19955,40 +19959,62 @@
 							inventory: this.setInventoryItems(inventory),
 							breeders: this.setBreederItems(this.state)
 						});
+						this.refs.inventory.deselectClover(id);
 					}
 				}
 			}
 		}, {
-			key: 'sellSelectedClover',
-			value: function sellSelectedClover() {
+			key: 'sellSelectedClovers',
+			value: function sellSelectedClovers() {
 				if (this.state.items.length <= 2) {
 					return;
 				}
-				var id = this.getSelectedClover();
+				var ids = this.getSelectedClovers();
 
-				if (id) {
-					var inventory = this.state.items;
-					for (var i = 0; i < inventory.length; i++) {
-						if (inventory[i].id == id) {
-							var clover = inventory.splice(i, 1);
-							if (clover[0]) {
-								var gold = Math.pow(2, clover[0].genes.length);
-								this.setState({
-									gold: this.state.gold + gold
-								});
+				var inventory = this.state.items;
+
+				for (var index = ids.length - 1; index >= 0; index--) {
+					var id = ids[index];
+
+					if (id) {
+						for (var i = 0; i < inventory.length; i++) {
+							if (inventory[i].id == id) {
+								var clover = inventory.splice(i, 1);
+								if (clover[0]) {
+									this.sellClover(clover[0]);
+								}
 							}
 						}
 					}
+				}
 
+				this.setState({
+					items: inventory,
+					inventory: this.setInventoryItems(inventory)
+				});
+			}
+		}, {
+			key: 'addAchievement',
+			value: function addAchievement(key) {
+				var achievements = this.state.achievements;
+				if (achievements.indexOf(key) === -1) {
+					achievements.push(key);
 					this.setState({
-						items: inventory,
-						inventory: this.setInventoryItems(inventory)
+						achievements: achievements
 					});
 				}
 			}
 		}, {
 			key: 'addClover',
 			value: function addClover(data) {
+				var _this2 = this;
+
+				Object.keys(_achievementdata2.default).forEach(function (key) {
+					var ach = _achievementdata2.default[key];
+					if (_this2.state.achievements.indexOf(key) === -1 && ach.checkGenes && ach.checkGenes(data.genes)) {
+						_this2.addAchievement(key);
+					}
+				});
 				if (this.state.inventory.length < this.state.maxInventory) {
 					var items = this.state.items;
 					items.push(this.createClover(data));
@@ -19997,11 +20023,35 @@
 						inventory: this.setInventoryItems(items)
 					});
 				} else if (this.state.upgrades.indexOf('sellExcess') != -1) {
-					var gold = Math.pow(2, data.genes.length);
-					this.setState({
-						gold: this.state.gold + gold
-					});
+					this.sellClover(data);
 				}
+			}
+		}, {
+			key: 'sellClovers',
+			value: function sellClovers(clovers) {
+				for (var c in clovers) {
+					this.sellClover(clovers[c]);
+				}
+			}
+		}, {
+			key: 'sellClover',
+			value: function sellClover(data) {
+				var _this3 = this;
+
+				var gold = Math.pow(2, data.genes.length);
+				var totalGold = this.state.gold + gold;
+				this.setState({
+					gold: totalGold
+				});
+
+				Object.keys(_achievementdata2.default).forEach(function (key) {
+					var ach = _achievementdata2.default[key];
+					if (_this3.state.achievements.indexOf(key) === -1 && ach.checkGold && ach.checkGold(totalGold)) {
+						_this3.addAchievement(key);
+					}
+				});
+
+				this.refs.inventory.deselectClover(data.id);
 			}
 		}, {
 			key: 'createClover',
@@ -20086,12 +20136,10 @@
 		}, {
 			key: 'render',
 			value: function render() {
-				var self = this;
-				function transferClover(id, location) {
-					self.transferClover(id, location);
-				}
+				var _this4 = this;
+
 				var breeders = this.state.breeders.map(function (breeder, index) {
-					return _react2.default.createElement(_breeder2.default, { key: index, data: breeder, ref: 'breeder' + index, index: index, transferClover: transferClover, addClover: self.addClover.bind(self), mutationChance: self.state.mutationChance, breederTime: self.state.breederTime });
+					return _react2.default.createElement(_breeder2.default, { key: index, data: breeder, ref: 'breeder' + index, index: index, transferClover: _this4.transferClover.bind(_this4), addClover: _this4.addClover.bind(_this4), mutationChance: _this4.state.mutationChance, breederTime: _this4.state.breederTime });
 				});
 				return _react2.default.createElement(
 					'div',
@@ -20170,18 +20218,18 @@
 									_react2.default.createElement(
 										'div',
 										{ className: 'col-xs-9 col-md-8' },
-										_react2.default.createElement(_inventory2.default, { items: this.state.inventory, maxInventory: this.state.maxInventory, ref: 'inventory' })
+										_react2.default.createElement(_inventory2.default, { items: this.state.inventory, maxInventory: this.state.maxInventory, ref: 'inventory' }),
+										_react2.default.createElement(
+											'button',
+											{ id: 'sellButton', className: 'btn btn-primary', onClick: this.sellSelectedClovers.bind(this) },
+											'Sell'
+										)
 									),
 									_react2.default.createElement(
 										'div',
 										{ className: 'col-xs-3 col-md-4' },
 										breeders
 									)
-								),
-								_react2.default.createElement(
-									'button',
-									{ id: 'sellButton', className: 'btn btn-primary', onClick: this.sellSelectedClover.bind(this) },
-									'Sell'
 								)
 							)
 						),
@@ -20198,7 +20246,7 @@
 						_react2.default.createElement(
 							'div',
 							{ role: 'tabpanel', className: 'tab-pane', id: 'achievements' },
-							_react2.default.createElement(_achievements2.default, null)
+							_react2.default.createElement(_achievements2.default, { achievements: this.state.achievements })
 						),
 						_react2.default.createElement(
 							'div',
@@ -20256,36 +20304,58 @@
 			var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(Inventory).call(this, props));
 
 			_this.state = {
-				selectedClover: null
+				selectedClovers: []
 			};
 			return _this;
 		}
 
 		_createClass(Inventory, [{
-			key: 'getSelectedClover',
-			value: function getSelectedClover() {
-				return this.state.selectedClover;
+			key: 'getSelectedClovers',
+			value: function getSelectedClovers() {
+				return this.state.selectedClovers;
 			}
 		}, {
 			key: 'deselectClover',
-			value: function deselectClover() {
-				this.state.selectedClover = null;
+			value: function deselectClover(id) {
+				var index = this.state.selectedClovers.indexOf(id);
+				if (index !== -1) {
+					var clovers = this.state.selectedClovers;
+					clovers.splice(index, 1);
+					this.setState({
+						selectedClovers: clovers
+					});
+				}
 			}
 		}, {
 			key: 'selectClover',
 			value: function selectClover(id) {
-				this.setState({
-					selectedClover: id
-				});
+				var index = this.state.selectedClovers.indexOf(id);
+				if (index === -1) {
+					var clovers = this.state.selectedClovers;
+					clovers.push(id);
+					this.setState({
+						selectedClovers: clovers
+					});
+				}
+			}
+		}, {
+			key: 'toggleSelectClover',
+			value: function toggleSelectClover(id) {
+				var index = this.state.selectedClovers.indexOf(id);
+				if (index === -1) {
+					this.selectClover(id);
+				} else {
+					this.deselectClover(id);
+				}
 			}
 		}, {
 			key: 'render',
 			value: function render() {
-				var self = this;
+				var _this2 = this;
 
-				var items = this.props.items.map(function (item, index) {
-					var selected = item.id == self.state.selectedClover;
-					return _react2.default.createElement(_clover2.default, { key: item.id, data: item, selected: selected, selectClover: self.selectClover.bind(self) });
+				var items = this.props.items.map(function (item) {
+					var selected = _this2.state.selectedClovers.indexOf(item.id) !== -1;
+					return _react2.default.createElement(_clover2.default, { key: item.id, data: item, selected: selected, selectClover: _this2.toggleSelectClover.bind(_this2) });
 				});
 
 				var count = items.length;
@@ -20294,6 +20364,11 @@
 				return _react2.default.createElement(
 					'div',
 					{ className: 'inventory' },
+					_react2.default.createElement(
+						'div',
+						{ className: 'label' },
+						'Inventory'
+					),
 					_react2.default.createElement(
 						'div',
 						null,
@@ -20448,12 +20523,14 @@
 			key: 'addClover',
 			value: function addClover(clovers) {
 				var genes = [];
+				var geneCount = (clovers[0].genes.length + clovers[1].genes.length) / 2;
+				var mutationChance = this.props.mutationChance / Math.pow(2, geneCount);
 
 				for (var g = 1; g <= 7; g++) {
 					var c = Math.floor(Math.random() * 2);
 					var gene = clovers[c].genes.indexOf(g) !== -1;
 					var mutation = Math.random() * 100;
-					if (mutation <= this.props.mutationChance) {
+					if (mutation <= mutationChance) {
 						gene = !gene;
 					}
 					if (gene) {
@@ -20500,6 +20577,11 @@
 				return _react2.default.createElement(
 					'div',
 					{ className: 'breeder' },
+					_react2.default.createElement(
+						'div',
+						{ className: 'label' },
+						'Breeder'
+					),
 					_react2.default.createElement(
 						'div',
 						null,
@@ -20882,7 +20964,7 @@
 /* 169 */
 /***/ function(module, exports, __webpack_require__) {
 
-	"use strict";
+	'use strict';
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
@@ -20893,6 +20975,10 @@
 	var _react = __webpack_require__(1);
 
 	var _react2 = _interopRequireDefault(_react);
+
+	var _achievementdata = __webpack_require__(170);
+
+	var _achievementdata2 = _interopRequireDefault(_achievementdata);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -20912,12 +20998,45 @@
 		}
 
 		_createClass(Achievements, [{
-			key: "render",
+			key: 'render',
 			value: function render() {
+				var _this2 = this;
+
+				var achievements = Object.keys(_achievementdata2.default).map(function (key, index) {
+					var title = '???';
+					var description = '???';
+					if (_this2.props.achievements.indexOf(key) !== -1) {
+						var achievement = _achievementdata2.default[key];
+						title = achievement.title;
+						description = achievement.description;
+					}
+					return _react2.default.createElement(
+						'div',
+						{ className: 'achievement col-sm-6', key: key },
+						_react2.default.createElement(
+							'div',
+							{ className: 'border' },
+							_react2.default.createElement(
+								'div',
+								{ className: 'title' },
+								title
+							),
+							_react2.default.createElement(
+								'div',
+								{ className: 'description' },
+								description
+							)
+						)
+					);
+				});
 				return _react2.default.createElement(
-					"div",
-					{ className: "container-fluid" },
-					"Achievements coming soon."
+					'div',
+					{ className: 'container-fluid' },
+					_react2.default.createElement(
+						'div',
+						{ className: 'row' },
+						achievements
+					)
 				);
 			}
 		}]);
@@ -20929,15 +21048,85 @@
 
 /***/ },
 /* 170 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+		value: true
+	});
+	var AchievementData = {
+		leftLeafGenes: {
+			title: 'Left Leaf',
+			description: 'Get both genes for the left leaf on the same plant.',
+			checkGenes: function checkGenes(genes) {
+				return genes.indexOf(1) !== -1 && genes.indexOf(2) !== -1;
+			}
+		},
+		middleLeafGenes: {
+			title: 'Middle Leaf',
+			description: 'Get both genes for the middle leaf on the same plant.',
+			checkGenes: function checkGenes(genes) {
+				return genes.indexOf(3) !== -1 && genes.indexOf(4) !== -1;
+			}
+		},
+		rightLeafGenes: {
+			title: 'Right Leaf',
+			description: 'Get both genes for the right leaf on the same plant.',
+			checkGenes: function checkGenes(genes) {
+				return genes.indexOf(5) !== -1 && genes.indexOf(6) !== -1;
+			}
+		},
+		stemGene: {
+			title: 'Stem',
+			description: 'Get the gene for the stem.',
+			checkGenes: function checkGenes(genes) {
+				return genes.indexOf(7) !== -1;
+			}
+		},
+		fourLeafClover: {
+			title: 'Four Leaf Clover',
+			description: 'Get all genes and have a Four Leaf Clover!',
+			checkGenes: function checkGenes(genes) {
+				return genes.indexOf(1) !== -1 && genes.indexOf(2) !== -1 && genes.indexOf(3) !== -1 && genes.indexOf(4) !== -1 && genes.indexOf(5) !== -1 && genes.indexOf(6) !== -1 && genes.indexOf(7) !== -1;
+			}
+		},
+		gold1000: {
+			title: '1000 Gold',
+			description: 'Amass 1000 gold.',
+			checkGold: function checkGold(gold) {
+				return gold >= 1000;
+			}
+		},
+		gold100000: {
+			title: '10,000 Gold',
+			description: 'Amass 10,000 gold.',
+			checkGold: function checkGold(gold) {
+				return gold >= 10000;
+			}
+		},
+		gold10000000: {
+			title: '100,000 Gold',
+			description: 'Amass 100,000 gold.',
+			checkGold: function checkGold(gold) {
+				return gold >= 100000;
+			}
+		}
+	};
+
+	exports.default = AchievementData;
+
+/***/ },
+/* 171 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 
 	// load the styles
-	var content = __webpack_require__(171);
+	var content = __webpack_require__(172);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(189)(content, {});
+	var update = __webpack_require__(190)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
@@ -20954,21 +21143,21 @@
 	}
 
 /***/ },
-/* 171 */
+/* 172 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(172)();
+	exports = module.exports = __webpack_require__(173)();
 	// imports
 
 
 	// module
-	exports.push([module.id, "body {\n  -webkit-touch-callout: none;\n  -webkit-user-select: none;\n  -khtml-user-select: none;\n  -moz-user-select: none;\n  -ms-user-select: none;\n  user-select: none; }\n\n.inventory {\n  padding: .25em;\n  margin: .25em;\n  border: 1px solid green;\n  border-radius: .25em; }\n\n.clover {\n  height: 5em;\n  width: 5em;\n  display: inline-block;\n  position: relative;\n  margin: .25em;\n  border: 1px solid transparent;\n  border-radius: .25em; }\n  .clover.selected {\n    border-color: green; }\n  .clover .leaf {\n    position: absolute;\n    top: 0;\n    left: 0;\n    height: 100%;\n    width: 100%;\n    background-size: cover; }\n    .clover .leaf.empty {\n      background-image: url(" + __webpack_require__(173) + "); }\n    .clover .leaf.one-a {\n      background-image: url(" + __webpack_require__(174) + "); }\n    .clover .leaf.one-b {\n      background-image: url(" + __webpack_require__(175) + "); }\n    .clover .leaf.two-a {\n      background-image: url(" + __webpack_require__(176) + "); }\n    .clover .leaf.two-b {\n      background-image: url(" + __webpack_require__(177) + "); }\n    .clover .leaf.three-a {\n      background-image: url(" + __webpack_require__(178) + "); }\n    .clover .leaf.three-b {\n      background-image: url(" + __webpack_require__(179) + "); }\n    .clover .leaf.four {\n      background-image: url(" + __webpack_require__(180) + "); }\n  .clover.gene1 .leaf.one-a {\n    background-image: url(" + __webpack_require__(181) + "); }\n  .clover.gene2 .leaf.one-b {\n    background-image: url(" + __webpack_require__(182) + "); }\n  .clover.gene3 .leaf.two-a {\n    background-image: url(" + __webpack_require__(183) + "); }\n  .clover.gene4 .leaf.two-b {\n    background-image: url(" + __webpack_require__(184) + "); }\n  .clover.gene5 .leaf.three-a {\n    background-image: url(" + __webpack_require__(185) + "); }\n  .clover.gene6 .leaf.three-b {\n    background-image: url(" + __webpack_require__(186) + "); }\n  .clover.gene7 .leaf.four {\n    background-image: url(" + __webpack_require__(187) + "); }\n  .clover.gene1.gene2.gene3.gene4.gene5.gene6.gene7 .leaf.four {\n    background-image: url(" + __webpack_require__(188) + "); }\n\n.breeder {\n  margin: .25em;\n  padding: .25em;\n  border: 1px solid green;\n  border-radius: .25em;\n  display: inline-block; }\n  .breeder .progress {\n    margin-bottom: 0;\n    height: 10px; }\n    .breeder .progress .progress-bar {\n      background-image: -webkit-linear-gradient(top, #40c440 0, #379a37 100%);\n      background-image: -o-linear-gradient(top, #40C440 0, #379a37 100%);\n      background-image: -webkit-gradient(linear, left top, left bottom, from(#40C440), to(#379a37));\n      background-image: linear-gradient(to bottom, #40C440 0, #379a37 100%);\n      filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff40C440', endColorstr='#ff379a37', GradientType=0);\n      transition: width .1s ease; }\n\n.tab-pane {\n  padding-top: .5em; }\n", ""]);
+	exports.push([module.id, "body {\n  -webkit-touch-callout: none;\n  -webkit-user-select: none;\n  -khtml-user-select: none;\n  -moz-user-select: none;\n  -ms-user-select: none;\n  user-select: none; }\n\n.inventory {\n  padding: .25em;\n  margin: .25em;\n  border: 1px solid green;\n  border-radius: .25em;\n  position: relative; }\n  .inventory .label {\n    position: absolute;\n    top: -.6em;\n    color: green;\n    background-color: white; }\n\n.clover {\n  height: 5em;\n  width: 5em;\n  display: inline-block;\n  position: relative;\n  margin: .25em;\n  border: 1px solid transparent;\n  border-radius: .25em; }\n  .clover.selected {\n    border-color: green; }\n  .clover .leaf {\n    position: absolute;\n    top: 0;\n    left: 0;\n    height: 100%;\n    width: 100%;\n    background-size: cover; }\n    .clover .leaf.empty {\n      background-image: url(" + __webpack_require__(174) + "); }\n    .clover .leaf.one-a {\n      background-image: url(" + __webpack_require__(175) + "); }\n    .clover .leaf.one-b {\n      background-image: url(" + __webpack_require__(176) + "); }\n    .clover .leaf.two-a {\n      background-image: url(" + __webpack_require__(177) + "); }\n    .clover .leaf.two-b {\n      background-image: url(" + __webpack_require__(178) + "); }\n    .clover .leaf.three-a {\n      background-image: url(" + __webpack_require__(179) + "); }\n    .clover .leaf.three-b {\n      background-image: url(" + __webpack_require__(180) + "); }\n    .clover .leaf.four {\n      background-image: url(" + __webpack_require__(181) + "); }\n  .clover.gene1 .leaf.one-a {\n    background-image: url(" + __webpack_require__(182) + "); }\n  .clover.gene2 .leaf.one-b {\n    background-image: url(" + __webpack_require__(183) + "); }\n  .clover.gene3 .leaf.two-a {\n    background-image: url(" + __webpack_require__(184) + "); }\n  .clover.gene4 .leaf.two-b {\n    background-image: url(" + __webpack_require__(185) + "); }\n  .clover.gene5 .leaf.three-a {\n    background-image: url(" + __webpack_require__(186) + "); }\n  .clover.gene6 .leaf.three-b {\n    background-image: url(" + __webpack_require__(187) + "); }\n  .clover.gene7 .leaf.four {\n    background-image: url(" + __webpack_require__(188) + "); }\n  .clover.gene1.gene2.gene3.gene4.gene5.gene6.gene7 .leaf.four {\n    background-image: url(" + __webpack_require__(189) + "); }\n\n.breeder {\n  margin: .25em;\n  padding: .25em;\n  border: 1px solid green;\n  border-radius: .25em;\n  position: relative;\n  display: inline-block; }\n  .breeder .label {\n    color: green;\n    background-color: white;\n    position: absolute;\n    top: -.7em; }\n  .breeder .progress {\n    margin-bottom: 0;\n    height: 10px; }\n    .breeder .progress .progress-bar {\n      background-image: -webkit-linear-gradient(top, #40c440 0, #379a37 100%);\n      background-image: -o-linear-gradient(top, #40C440 0, #379a37 100%);\n      background-image: -webkit-gradient(linear, left top, left bottom, from(#40C440), to(#379a37));\n      background-image: linear-gradient(to bottom, #40C440 0, #379a37 100%);\n      filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff40C440', endColorstr='#ff379a37', GradientType=0);\n      transition: width .1s ease; }\n\n.tab-pane {\n  padding-top: .5em; }\n\n.achievement .border {\n  border: 1px solid green;\n  border-radius: .25em;\n  margin: .5em 0; }\n\n.achievement .title {\n  margin: .25em; }\n\n.achievement .description {\n  margin: .25em; }\n", ""]);
 
 	// exports
 
 
 /***/ },
-/* 172 */
+/* 173 */
 /***/ function(module, exports) {
 
 	/*
@@ -21024,103 +21213,103 @@
 
 
 /***/ },
-/* 173 */
+/* 174 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = __webpack_require__.p + "images/clover0g.png";
 
 /***/ },
-/* 174 */
+/* 175 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = __webpack_require__.p + "images/clover8g.png";
 
 /***/ },
-/* 175 */
+/* 176 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = __webpack_require__.p + "images/clover7g.png";
 
 /***/ },
-/* 176 */
+/* 177 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = __webpack_require__.p + "images/clover5g.png";
 
 /***/ },
-/* 177 */
+/* 178 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = __webpack_require__.p + "images/clover6g.png";
 
 /***/ },
-/* 178 */
+/* 179 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = __webpack_require__.p + "images/clover2g.png";
 
 /***/ },
-/* 179 */
+/* 180 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = __webpack_require__.p + "images/clover1g.png";
 
 /***/ },
-/* 180 */
+/* 181 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = __webpack_require__.p + "images/clover9g.png";
 
 /***/ },
-/* 181 */
+/* 182 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = __webpack_require__.p + "images/clover8y.png";
 
 /***/ },
-/* 182 */
+/* 183 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = __webpack_require__.p + "images/clover7y.png";
 
 /***/ },
-/* 183 */
+/* 184 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = __webpack_require__.p + "images/clover5y.png";
 
 /***/ },
-/* 184 */
+/* 185 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = __webpack_require__.p + "images/clover6y.png";
 
 /***/ },
-/* 185 */
+/* 186 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = __webpack_require__.p + "images/clover2y.png";
 
 /***/ },
-/* 186 */
+/* 187 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = __webpack_require__.p + "images/clover1y.png";
 
 /***/ },
-/* 187 */
+/* 188 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = __webpack_require__.p + "images/clover9y.png";
 
 /***/ },
-/* 188 */
+/* 189 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = __webpack_require__.p + "images/clover34y.png";
 
 /***/ },
-/* 189 */
+/* 190 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*

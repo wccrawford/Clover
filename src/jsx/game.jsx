@@ -11,6 +11,7 @@ import Help from './help.jsx';
 import Achievements from './achievements.jsx';
 
 import UpgradeData from './upgradedata.js';
+import AchievementData from './achievementdata.js';
 
 class Game extends React.Component {
 	constructor(props) {
@@ -20,7 +21,7 @@ class Game extends React.Component {
 			maxInventory: 5,
 			mutationChance: 1,
 			breederCount: 1,
-			breederTime: 15,
+			breederTime: 15
 		};
 
 		this.state = this.loadState() || {
@@ -36,7 +37,8 @@ class Game extends React.Component {
 			],
 			breeders: [],
 			inventory: [],
-			upgrades: []
+			upgrades: [],
+			achievements: []
 		};
 
 		Object.assign(this.state, this.processUpgrades(this.state));
@@ -53,7 +55,7 @@ class Game extends React.Component {
 	processUpgrades(state) {
 		var data = Object.assign({}, this.defaultStats);
 		for(var upgrade in UpgradeData) {
-			if(state.upgrades.indexOf(upgrade) != -1) {
+			if(state.upgrades && state.upgrades.indexOf(upgrade) != -1) {
 				if(typeof(UpgradeData[upgrade].process) == 'function') {
 					data = UpgradeData[upgrade].process(data);
 				}
@@ -103,13 +105,13 @@ class Game extends React.Component {
 		return inventoryItems;
 	}
 
-	getSelectedClover() {
-		return this.refs.inventory.getSelectedClover();
+	getSelectedClovers() {
+		return this.refs.inventory.getSelectedClovers();
 	}
 
 	transferClover(id, location) {
 		if (!id) {
-			id = this.getSelectedClover();
+			id = this.getSelectedClovers()[0];
 		}
 
 		if (id) {
@@ -127,39 +129,57 @@ class Game extends React.Component {
 					inventory: this.setInventoryItems(inventory),
 					breeders: this.setBreederItems(this.state)
 				});
-				this.refs.inventory.deselectClover();
+				this.refs.inventory.deselectClover(id);
 			}
 		}
 	}
 
-	sellSelectedClover() {
+	sellSelectedClovers() {
 		if(this.state.items.length <= 2) {
 			return;
 		}
-		var id = this.getSelectedClover();
+		var ids = this.getSelectedClovers();
 
-		if(id) {
-			var inventory = this.state.items;
-			for(var i=0; i<inventory.length; i++) {
-				if(inventory[i].id == id) {
-					var clover = inventory.splice(i, 1);
-					if(clover[0]) {
-						var gold = Math.pow(2, clover[0].genes.length);
-						this.setState({
-							gold: this.state.gold + gold
-						});
+		var inventory = this.state.items;
+
+		for(var index=ids.length-1; index >= 0; index--) {
+			var id = ids[index];
+
+			if (id) {
+				for (var i = 0; i < inventory.length; i++) {
+					if (inventory[i].id == id) {
+						var clover = inventory.splice(i, 1);
+						if (clover[0]) {
+							this.sellClover(clover[0]);
+						}
 					}
 				}
 			}
+		}
 
+		this.setState({
+			items: inventory,
+			inventory: this.setInventoryItems(inventory)
+		});
+	}
+
+	addAchievement(key) {
+		var achievements = this.state.achievements;
+		if(achievements.indexOf(key) === -1) {
+			achievements.push(key);
 			this.setState({
-				items: inventory,
-				inventory: this.setInventoryItems(inventory)
+				achievements: achievements
 			});
 		}
 	}
 
 	addClover(data) {
+		Object.keys(AchievementData).forEach((key) => {
+			var ach = AchievementData[key];
+			if((this.state.achievements.indexOf(key) === -1) && ach.checkGenes && ach.checkGenes(data.genes)) {
+				this.addAchievement(key);
+			}
+		});
 		if(this.state.inventory.length < this.state.maxInventory) {
 			var items = this.state.items;
 			items.push(this.createClover(data));
@@ -168,11 +188,31 @@ class Game extends React.Component {
 				inventory: this.setInventoryItems(items)
 			});
 		} else if(this.state.upgrades.indexOf('sellExcess') != -1) {
-			var gold = Math.pow(2, data.genes.length);
-			this.setState({
-				gold: this.state.gold + gold
-			});
+			this.sellClover(data);
 		}
+	}
+
+	sellClovers(clovers) {
+		for(var c in clovers) {
+			this.sellClover(clovers[c]);
+		}
+	}
+
+	sellClover(data) {
+		var gold = Math.pow(2, data.genes.length);
+		var totalGold = this.state.gold + gold;
+		this.setState({
+			gold: totalGold
+		});
+
+		Object.keys(AchievementData).forEach((key) => {
+			var ach = AchievementData[key];
+			if ((this.state.achievements.indexOf(key) === -1) && ach.checkGold && ach.checkGold(totalGold)) {
+				this.addAchievement(key);
+			}
+		});
+
+		this.refs.inventory.deselectClover(data.id);
 	}
 
 	createClover(data) {
@@ -269,20 +309,20 @@ class Game extends React.Component {
 				<div className="tab-content">
 					<div role="tabpanel" className="tab-pane active" id="home">
 						<div className="container-fluid">
-						<div className="row">
-							<div className="col-xs-12">
-								Gold: {this.state.gold}
+							<div className="row">
+								<div className="col-xs-12">
+									Gold: {this.state.gold}
+								</div>
 							</div>
-						</div>
-						<div className="row">
-							<div className="col-xs-9 col-md-8">
-								<Inventory items={this.state.inventory} maxInventory={this.state.maxInventory} ref="inventory"/>
+							<div className="row">
+								<div className="col-xs-9 col-md-8">
+									<Inventory items={this.state.inventory} maxInventory={this.state.maxInventory} ref="inventory"/>
+									<button id="sellButton" className="btn btn-primary" onClick={this.sellSelectedClovers.bind(this)}>Sell</button>
+								</div>
+								<div className="col-xs-3 col-md-4">
+									{breeders}
+								</div>
 							</div>
-							<div className="col-xs-3 col-md-4">
-								{breeders}
-							</div>
-						</div>
-						<button id="sellButton" className="btn btn-primary" onClick={this.sellSelectedClover.bind(this)}>Sell</button>
 						</div>
 					</div>
 					<div role="tabpanel" className="tab-pane" id="upgrades">
@@ -292,7 +332,7 @@ class Game extends React.Component {
 						<Options />
 					</div>
 					<div role="tabpanel" className="tab-pane" id="achievements">
-						<Achievements />
+						<Achievements achievements={this.state.achievements}/>
 					</div>
 					<div role="tabpanel" className="tab-pane" id="help">
 						<Help />

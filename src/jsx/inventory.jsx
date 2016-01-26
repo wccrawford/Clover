@@ -7,29 +7,50 @@ class Inventory extends React.Component {
 		super(props);
 
 		this.state = {
-			selectedClover: null
+			selectedClovers: []
 		};
 	}
 
-	getSelectedClover() {
-		return this.state.selectedClover;
+	getSelectedClovers() {
+		return this.state.selectedClovers;
 	}
 
-	deselectClover() {
-		this.state.selectedClover = null;
+	deselectClover(id) {
+		var index = this.state.selectedClovers.indexOf(id);
+		if(index !== -1) {
+			var clovers = this.state.selectedClovers;
+			clovers.splice(index, 1);
+			this.setState({
+				selectedClovers: clovers
+			});
+		}
 	}
 
 	selectClover(id) {
-		this.setState({
-			selectedClover: id
-		});
+		var index = this.state.selectedClovers.indexOf(id);
+		if(index === -1) {
+			var clovers = this.state.selectedClovers;
+			clovers.push(id);
+			this.setState({
+				selectedClovers: clovers
+			});
+		}
+	}
+
+	toggleSelectClover(id) {
+		var index = this.state.selectedClovers.indexOf(id);
+		if(index === -1) {
+			this.selectClover(id);
+		} else {
+			this.deselectClover(id);
+		}
 	}
 
 	render() {
 		var items = this.props.items.map(item => {
-			var selected = (item.id == this.state.selectedClover);
+			var selected = (this.state.selectedClovers.indexOf(item.id) !== -1);
 			return (
-				<Clover key={item.id} data={item} selected={selected} selectClover={this.selectClover.bind(this)}/>
+				<Clover key={item.id} data={item} selected={selected} selectClover={this.toggleSelectClover.bind(this)}/>
 			);
 		});
 
@@ -38,6 +59,7 @@ class Inventory extends React.Component {
 
 		return (
 			<div className="inventory">
+				<div className="label">Inventory</div>
 				<div>
 					{items}
 				</div>

@@ -37,7 +37,6 @@ class Breeder extends React.Component {
 			var c = Math.floor(Math.random()*2);
 			var gene = clovers[c].genes.indexOf(g) !== -1;
 			var mutation = (Math.random()*100);
-			console.log(mutationChance);
 			if(mutation <= mutationChance) {
 				gene = !gene;
 			}
@@ -76,6 +75,7 @@ class Breeder extends React.Component {
 
 		return (
 			<div className="breeder">
+				<div className="label">Breeder</div>
 				<div>{clovers}</div>
 				<div className="progress">
 					<div className="progress-bar" role="progressbar" style={style}></div>
