@@ -19973,6 +19973,8 @@
 
 				var inventory = this.state.items;
 
+				var clovers = [];
+
 				for (var index = ids.length - 1; index >= 0; index--) {
 					var id = ids[index];
 
@@ -19981,11 +19983,16 @@
 							if (inventory[i].id == id) {
 								var clover = inventory.splice(i, 1);
 								if (clover[0]) {
-									this.sellClover(clover[0]);
+									//this.sellClover(clover[0]);
+									clovers.push(clover[0]);
 								}
 							}
 						}
 					}
+				}
+
+				if (clovers.length) {
+					this.sellClovers(clovers);
 				}
 
 				this.setState({
@@ -20023,36 +20030,53 @@
 						inventory: this.setInventoryItems(items)
 					});
 				} else if (this.state.upgrades.indexOf('sellExcess') != -1) {
-					this.sellClover(data);
+					this.sellClovers([data]);
 				}
 			}
 		}, {
 			key: 'sellClovers',
 			value: function sellClovers(clovers) {
-				for (var c in clovers) {
-					this.sellClover(clovers[c]);
-				}
-			}
-		}, {
-			key: 'sellClover',
-			value: function sellClover(data) {
 				var _this3 = this;
 
-				var gold = Math.pow(2, data.genes.length);
-				var totalGold = this.state.gold + gold;
+				var totalGold = this.state.gold;
+
+				for (var c in clovers) {
+					var clover = clovers[c];
+					var gold = Math.pow(2, clover.genes.length);
+					totalGold += gold;
+
+					Object.keys(_achievementdata2.default).forEach(function (key) {
+						var ach = _achievementdata2.default[key];
+						if (_this3.state.achievements.indexOf(key) === -1 && ach.checkGold && ach.checkGold(totalGold)) {
+							_this3.addAchievement(key);
+						}
+					});
+
+					this.refs.inventory.deselectClover(clover.id);
+				}
+
 				this.setState({
 					gold: totalGold
 				});
-
-				Object.keys(_achievementdata2.default).forEach(function (key) {
-					var ach = _achievementdata2.default[key];
-					if (_this3.state.achievements.indexOf(key) === -1 && ach.checkGold && ach.checkGold(totalGold)) {
-						_this3.addAchievement(key);
-					}
-				});
-
-				this.refs.inventory.deselectClover(data.id);
 			}
+
+			//sellClover(data) {
+			//	var gold = Math.pow(2, data.genes.length);
+			//	var totalGold = this.state.gold + gold;
+			//	this.setState({
+			//		gold: totalGold
+			//	});
+			//
+			//	Object.keys(AchievementData).forEach((key) => {
+			//		var ach = AchievementData[key];
+			//		if ((this.state.achievements.indexOf(key) === -1) && ach.checkGold && ach.checkGold(totalGold)) {
+			//			this.addAchievement(key);
+			//		}
+			//	});
+			//
+			//	this.refs.inventory.deselectClover(data.id);
+			//}
+
 		}, {
 			key: 'createClover',
 			value: function createClover(data) {
