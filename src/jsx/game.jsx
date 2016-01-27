@@ -142,6 +142,8 @@ class Game extends React.Component {
 
 		var inventory = this.state.items;
 
+		var clovers = [];
+
 		for(var index=ids.length-1; index >= 0; index--) {
 			var id = ids[index];
 
@@ -150,11 +152,16 @@ class Game extends React.Component {
 					if (inventory[i].id == id) {
 						var clover = inventory.splice(i, 1);
 						if (clover[0]) {
-							this.sellClover(clover[0]);
+							//this.sellClover(clover[0]);
+							clovers.push(clover[0]);
 						}
 					}
 				}
 			}
+		}
+
+		if(clovers.length) {
+			this.sellClovers(clovers);
 		}
 
 		this.setState({
@@ -188,32 +195,49 @@ class Game extends React.Component {
 				inventory: this.setInventoryItems(items)
 			});
 		} else if(this.state.upgrades.indexOf('sellExcess') != -1) {
-			this.sellClover(data);
+			this.sellClovers([data]);
 		}
 	}
 
 	sellClovers(clovers) {
+		var totalGold = this.state.gold;
+		
 		for(var c in clovers) {
-			this.sellClover(clovers[c]);
-		}
-	}
+			var clover = clovers[c];
+			var gold = Math.pow(2, clover.genes.length);
+			totalGold += gold;
 
-	sellClover(data) {
-		var gold = Math.pow(2, data.genes.length);
-		var totalGold = this.state.gold + gold;
+			Object.keys(AchievementData).forEach((key) => {
+				var ach = AchievementData[key];
+				if ((this.state.achievements.indexOf(key) === -1) && ach.checkGold && ach.checkGold(totalGold)) {
+					this.addAchievement(key);
+				}
+			});
+
+			this.refs.inventory.deselectClover(clover.id);
+		}
+
 		this.setState({
 			gold: totalGold
 		});
-
-		Object.keys(AchievementData).forEach((key) => {
-			var ach = AchievementData[key];
-			if ((this.state.achievements.indexOf(key) === -1) && ach.checkGold && ach.checkGold(totalGold)) {
-				this.addAchievement(key);
-			}
-		});
-
-		this.refs.inventory.deselectClover(data.id);
 	}
+
+	//sellClover(data) {
+	//	var gold = Math.pow(2, data.genes.length);
+	//	var totalGold = this.state.gold + gold;
+	//	this.setState({
+	//		gold: totalGold
+	//	});
+	//
+	//	Object.keys(AchievementData).forEach((key) => {
+	//		var ach = AchievementData[key];
+	//		if ((this.state.achievements.indexOf(key) === -1) && ach.checkGold && ach.checkGold(totalGold)) {
+	//			this.addAchievement(key);
+	//		}
+	//	});
+	//
+	//	this.refs.inventory.deselectClover(data.id);
+	//}
 
 	createClover(data) {
 		var clover = {
